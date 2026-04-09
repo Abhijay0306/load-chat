@@ -38,7 +38,7 @@ function appendMessage(role, content, meta = null) {
     // Avatar column
     if (role === 'ai') {
         html += `<div class="msg-avatar">
-                   <img src="momo.png" alt="Miss MoMo" class="momo-idle-anim">
+                   <img src="momo.gif" alt="Miss MoMo" class="momo-idle-anim">
                  </div>`;
     }
 
@@ -92,7 +92,7 @@ function showThinking() {
     thinkingDiv.id = 'thinking-indicator';
     thinkingDiv.innerHTML = `
         <div class="msg-avatar">
-            <img src="momo.png" alt="Miss MoMo" class="momo-idle-anim">
+            <img src="momo.gif" alt="Miss MoMo" class="momo-idle-anim">
         </div>
         <div class="msg-content">
             <div class="msg-bubble">
