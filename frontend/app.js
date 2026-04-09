@@ -92,7 +92,7 @@ function showThinking() {
     thinkingDiv.id = 'thinking-indicator';
     thinkingDiv.innerHTML = `
         <div class="msg-avatar">
-            <img src="momo.gif" alt="Miss MoMo" class="momo-idle-anim">
+            <img src="Thinking_Momo.gif" alt="Miss MoMo Thinking" class="momo-idle-anim">
         </div>
         <div class="msg-content">
             <div class="msg-bubble">
