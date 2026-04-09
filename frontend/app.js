@@ -35,11 +35,20 @@ function appendMessage(role, content, meta = null) {
 
     let html = '';
     
-    // Role label
-    const roleLabel = role === 'user' ? 'You' : role === 'system' ? '' : 'Miss MoMo';
-    const renderedContent = role === 'ai' ? marked.parse(content) : content;
-    if (roleLabel) html += `<div class="msg-role">${roleLabel}</div>`;
+    // Avatar column
+    if (role === 'ai') {
+        html += `<div class="msg-avatar">
+                   <img src="momo.png" alt="Miss MoMo" class="momo-idle-anim">
+                 </div>`;
+    }
 
+    // Content column
+    html += `<div class="msg-content">`;
+    if (role === 'user') {
+        html += `<div class="msg-role">You</div>`;
+    }
+
+    const renderedContent = role === 'ai' ? marked.parse(content) : content;
     html += `<div class="msg-bubble">${renderedContent}</div>`;
 
     if (role === 'ai' && meta) {
@@ -69,6 +78,7 @@ function appendMessage(role, content, meta = null) {
         }
     }
 
+    html += `</div>`; // Close msg-content
     msgDiv.innerHTML = html;
     chatHistory.appendChild(msgDiv);
     chatHistory.scrollTop = chatHistory.scrollHeight;
@@ -81,9 +91,14 @@ function showThinking() {
     thinkingDiv.className = 'message ai';
     thinkingDiv.id = 'thinking-indicator';
     thinkingDiv.innerHTML = `
-        <div class="msg-bubble">
-            <div class="thinking-dots">
-                <span></span><span></span><span></span>
+        <div class="msg-avatar">
+            <img src="momo.png" alt="Miss MoMo" class="momo-idle-anim">
+        </div>
+        <div class="msg-content">
+            <div class="msg-bubble">
+                <div class="thinking-dots">
+                    <span></span><span></span><span></span>
+                </div>
             </div>
         </div>`;
     chatHistory.appendChild(thinkingDiv);
@@ -119,18 +134,37 @@ async function sendMessage() {
         hideThinking();
 
         if (res.ok) {
-            // Extract any base64 images from the retrieved chunks (Docling format)
             const images = [];
-            if (data.rich_chunks) {
+            // Parse AI's intentional image tags: [SHOW_IMAGE: 1], [SHOW_IMAGE: 2]
+            const showRegex = /\[SHOW_IMAGE:\s*(\d+)\]/g;
+            let mShow;
+            const requestedIndices = [];
+            while ((mShow = showRegex.exec(data.answer)) !== null) {
+                requestedIndices.push(parseInt(mShow[1], 10) - 1);
+            }
+            
+            // Remove the raw tags from the text so the user doesn't see them
+            const cleanAnswer = data.answer.replace(/\[SHOW_IMAGE:\s*\d+\]/g, '').trim();
+
+            if (data.rich_chunks && requestedIndices.length > 0) {
+                // Collect ALL available images in context sequentially
+                const allContextImages = [];
                 const imgRegex = /!\[[^\]]*\]\((data:image\/[^)]+)\)/g;
                 for (const chunk of data.rich_chunks) {
-                    let m;
-                    while ((m = imgRegex.exec(chunk)) !== null) {
-                        if (!images.includes(m[1])) images.push(m[1]);
+                    let mImg;
+                    while ((mImg = imgRegex.exec(chunk)) !== null) {
+                        allContextImages.push(mImg[1]);
+                    }
+                }
+                // Only attach the ones the AI explicitly requested
+                for (const idx of requestedIndices) {
+                    if (allContextImages[idx] && !images.includes(allContextImages[idx])) {
+                        images.push(allContextImages[idx]);
                     }
                 }
             }
-            appendMessage('ai', data.answer, {
+
+            appendMessage('ai', cleanAnswer, {
                 input_tokens:  data.input_tokens  ?? 0,
                 output_tokens: data.output_tokens ?? 0,
                 sources: data.sources ?? [],

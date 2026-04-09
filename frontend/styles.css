@@ -283,13 +283,53 @@ body {
 /* ─── Messages ─── */
 .message {
     display: flex;
-    flex-direction: column;
     max-width: 85%;
     animation: fadeIn 0.3s ease;
+    gap: 12px;
 }
 
-.message.user { align-self: flex-end; }
-.message.ai { align-self: flex-start; }
+.message.user { 
+    align-self: flex-end; 
+    flex-direction: row-reverse;
+}
+.message.ai { 
+    align-self: flex-start; 
+    flex-direction: row;
+}
+
+.msg-role {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    padding: 0 8px;
+}
+.message.user .msg-role {
+    text-align: right;
+}
+
+.msg-avatar {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    margin-top: auto;
+    overflow: hidden;
+    background: var(--bg-soft);
+    box-shadow: 0 4px 12px rgba(196, 38, 51, 0.2);
+}
+
+.momo-idle-anim {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    animation: avatar-breathe 3s infinite ease-in-out;
+}
+
+@keyframes avatar-breathe {
+    0%, 100% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.05); filter: brightness(1.15) drop-shadow(0 0 6px rgba(196, 38, 51, 0.4)); }
+}
 
 .msg-bubble {
     padding: 18px 24px;
