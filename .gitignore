@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+.venv3/
+
+# Environment Variables & Secrets
+.env
+.dev.vars
+.wrangler/
+
+# Documents and Temp Files
+Documents/
+"Test Documents"/
+__pycache__/
+
+# Mac
+.DS_Store
