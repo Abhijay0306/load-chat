@@ -27,7 +27,7 @@ document.querySelectorAll('.suggestion-item').forEach(item => {
 // ── Append Message ──
 function appendMessage(role, content, meta = null) {
     // Remove welcome block on first message
-    const welcome = chatHistory.querySelector('.welcome-block');
+    const welcome = chatHistory.querySelector('.welcome-msg');
     if (welcome) welcome.remove();
 
     const msgDiv = document.createElement('div');
