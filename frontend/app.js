@@ -30,12 +30,17 @@ function appendMessage(role, content, meta = null) {
     const welcome = chatHistory.querySelector('.welcome-msg');
     if (welcome) welcome.remove();
 
+    // Strip avatar gif from all previous AI messages — only the latest gets one
+    if (role === 'ai') {
+        chatHistory.querySelectorAll('.message.ai .msg-avatar').forEach(av => av.remove());
+    }
+
     const msgDiv = document.createElement('div');
     msgDiv.className = `message ${role}`;
 
     let html = '';
     
-    // Avatar column
+    // Avatar column — always added; will be stripped from older messages on next append
     if (role === 'ai') {
         html += `<div class="msg-avatar">
                    <img src="momo.gif" alt="Miss MoMo" class="momo-idle-anim">
