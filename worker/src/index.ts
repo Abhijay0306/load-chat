@@ -1,13 +1,22 @@
 // Cloudflare RAG Worker
 // =====================
 // Handles:
-//   /chat         → Gemini Embedding 2 (3072d) pipeline
+//   /chat         → v1 Gemini Embedding 2 (3072d) pipeline (baseline, untouched)
+//   /chat/v2      → v2 hybrid + rerank pipeline (separate Supabase project)
 //   /health       → Health check
+
+import { handleChatV2 } from "./chat_v2";
 
 export interface Env {
   SUPABASE_URL: string;
   SUPABASE_KEY: string;
   OPENROUTER_API_KEY: string;
+  // ── v2 (parallel A/B pipeline → separate Supabase project) ──
+  SUPABASE_URL_V2?: string;
+  SUPABASE_KEY_V2?: string;
+  SHOPIFY_STORE_DOMAIN?: string;
+  SHOPIFY_LINK_DOMAIN?: string;
+  SHOPIFY_STOREFRONT_TOKEN?: string;
 }
 
 const CORS_HEADERS = {
@@ -226,8 +235,32 @@ async function handleChat(
   });
 }
 
+// ── Keep-warm: touch the Supabase projects so the free tier doesn't go cold ──
+async function warmDatabases(env: Env): Promise<Record<string, number>> {
+  const targets: { name: string; url?: string; key?: string }[] = [
+    { name: "v2", url: env.SUPABASE_URL_V2, key: env.SUPABASE_KEY_V2 },
+    { name: "v1", url: env.SUPABASE_URL, key: env.SUPABASE_KEY },
+  ];
+  const out: Record<string, number> = {};
+  await Promise.all(targets.map(async (t) => {
+    if (!t.url || !t.key) { out[t.name] = 0; return; }
+    try {
+      const r = await fetch(`${t.url}/rest/v1/documents_gemini?select=id&limit=1`, {
+        headers: { apikey: t.key, Authorization: `Bearer ${t.key}` },
+      });
+      out[t.name] = r.status;
+    } catch { out[t.name] = -1; }
+  }));
+  return out;
+}
+
 // ── Main Worker Handler ──
 export default {
+  // Cron keep-warm (see wrangler.toml [triggers]) — pings the DBs on a schedule
+  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(warmDatabases(env).then((s) => console.log("[warmup cron]", JSON.stringify(s))));
+  },
+
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
@@ -239,12 +272,29 @@ export default {
       return jsonResponse({ status: "ok", timestamp: new Date().toISOString() });
     }
 
+    // Lightweight warm-up the widget can hit on page load, so the DB is awake
+    // by the time the visitor sends their first message.
+    if (url.pathname === "/warmup") {
+      const status = await warmDatabases(env);
+      return jsonResponse({ warmed: status });
+    }
+
     if (url.pathname === "/chat" && request.method === "POST") {
       try {
         return await handleChat(request, env);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         console.error("Chat error:", message);
+        return jsonResponse({ error: `Server error: ${message}` }, 500);
+      }
+    }
+
+    if (url.pathname === "/chat/v2" && request.method === "POST") {
+      try {
+        return await handleChatV2(request, env);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("Chat v2 error:", message);
         return jsonResponse({ error: `Server error: ${message}` }, 500);
       }
     }

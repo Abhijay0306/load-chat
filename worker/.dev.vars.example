@@ -1,0 +1,13 @@
+# Worker secrets for local dev (copy to .dev.vars; do NOT commit .dev.vars).
+# In production set these with: wrangler secret put <NAME>
+
+# ── v1 (live baseline — untouched) ──
+SUPABASE_KEY=your-v1-service-role-key
+OPENROUTER_API_KEY=sk-or-...
+
+# ── v2 (parallel A/B pipeline → NEW Supabase project) ──
+# SUPABASE_URL_V2 goes in wrangler.toml [vars]; the key is a secret:
+SUPABASE_KEY_V2=your-v2-service-role-key
+
+# ── §9 product-handle filter + product links (optional) ──
+SHOPIFY_STOREFRONT_TOKEN=your-storefront-token

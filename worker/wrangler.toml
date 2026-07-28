@@ -7,6 +7,14 @@ compatibility_flags = ["nodejs_compat"]
 port = 8787
 local_protocol = "http"
 
+# Keep-warm: ping the Supabase projects every 5 min so the free tier stays awake
+[triggers]
+crons = ["*/5 * * * *"]
+
 [vars]
-SUPABASE_URL = "https://crnwhlnaiozvqlwavycm.supabase.co"
-# Secrets are loaded from .dev.vars in local dev
+SUPABASE_URL = "https://crnwhlnaiozvqlwavycm.supabase.co"      # v1 live (untouched)
+SUPABASE_URL_V2 = "https://bwsqmhtacmdmzscvjcqa.supabase.co"   # v2 A/B (new project)
+SHOPIFY_STORE_DOMAIN = "load-controls.myshopify.com"          # Storefront API host (reliable)
+SHOPIFY_LINK_DOMAIN  = "www.loadcontrols.com"                # public storefront for product links
+# Secrets (SUPABASE_KEY, OPENROUTER_API_KEY, SUPABASE_KEY_V2, SHOPIFY_STOREFRONT_TOKEN)
+# are loaded from .dev.vars in local dev and `wrangler secret put` in prod.
