@@ -1,4 +1,4 @@
-# 🐮 Miss MoMo — RAG Chatbot for Load Controls
+# Miss MoMo — RAG Chatbot for Load Controls
 
 Miss MoMo is a production **Retrieval-Augmented Generation (RAG)** assistant embedded on
 [www.loadcontrols.com](https://www.loadcontrols.com). It answers product and technical questions using
